@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {contains,createAreaIndex,readShare} from '../src/geo.ts';
+const square=[[0,0],[10,0],[10,10],[0,10],[0,0]],hole=[[2,2],[4,2],[4,4],[2,4],[2,2]];
+const f={type:'Feature',properties:{id:'test'},geometry:{type:'Polygon',coordinates:[square,hole]}};
+assert(contains(f,[1,1]));assert(contains(f,[0,5]));assert(!contains(f,[3,3]));assert(!contains(f,[11,5]));
+assert(contains({...f,geometry:{type:'MultiPolygon',coordinates:[[square]]}},[5,5]));
+const data=JSON.parse(readFileSync(new URL('../public/data/neighborhoods.geojson',import.meta.url)));
+const index=createAreaIndex(data);assert.equal(index.byId.size,2806);
+assert.equal(index.at([-112.0771083,33.4487851]).properties.id,'040131141001');assert.equal(index.at([0,0]),undefined);
+assert.deepEqual(readShare('#area=040131141001&metric=poverty'),{area:'040131141001',metric:'poverty'});
+assert.deepEqual(readShare('#area=bad&metric=bad'),{area:null,metric:'overall'});
+console.log('Geography, address containment, and share-state checks passed.');

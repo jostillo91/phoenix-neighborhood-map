@@ -1,0 +1,109 @@
+{
+  "title": "Phoenix Valley Neighborhood Conditions Map",
+  "year": 2024,
+  "period": "2020\u20132024",
+  "geographyYear": 2024,
+  "retrieved": "2026-09-08",
+  "unitLabel": "Block groups",
+  "featureCount": 2806,
+  "scope": "All Maricopa County, Arizona (FIPS 04013), including rural areas; excludes Pinal County.",
+  "overallScored": 2646,
+  "missingByMetric": {
+    "income": 158,
+    "poverty": 37,
+    "vacancy": 39,
+    "value": 279,
+    "affordability": 252
+  },
+  "sources": [
+    {
+      "url": "https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-b19013.dat",
+      "retrieved": "2026-09-08",
+      "sha256": "b25a176b0e6c339b6f3a2a0d3d8446bf06f5f080b4395993ec9a8313efb1c229",
+      "table": "B19013"
+    },
+    {
+      "url": "https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-c17002.dat",
+      "retrieved": "2026-09-08",
+      "sha256": "dc3dc675113683ec3ff2a0e29a840f43e03268151d7f14b922658d7306da5187",
+      "table": "C17002"
+    },
+    {
+      "url": "https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-b25002.dat",
+      "retrieved": "2026-09-08",
+      "sha256": "eb98debfe8e8533e9a8e647a8c5dca5dbe11401c4de4e4449b4a2ba7dc75620f",
+      "table": "B25002"
+    },
+    {
+      "url": "https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-b25077.dat",
+      "retrieved": "2026-09-08",
+      "sha256": "89eb2153764a2330b23959d8bbc29b3a8f3016f087b990f2a8ea0d5096d9a816",
+      "table": "B25077"
+    },
+    {
+      "url": "https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/5YRData/acsdt5y2024-b25070.dat",
+      "retrieved": "2026-09-08",
+      "sha256": "862ccc17d913305d11e6f802ce4518d76b30585ea0b05b251cd8cf21f8661386",
+      "table": "B25070"
+    },
+    {
+      "url": "https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_04_bg_500k.zip",
+      "year": 2024,
+      "scale": "1:500,000",
+      "sha256": "50e21874561847495053a534b5e368fcc959ba382d1028fa87147d5ec59035c0"
+    }
+  ],
+  "weights": {
+    "income": 0.25,
+    "poverty": 0.25,
+    "vacancy": 0.2,
+    "value": 0.15,
+    "affordability": 0.15
+  },
+  "anchorsP05P50P95": {
+    "income": [
+      42829.549999999996,
+      92382.0,
+      185975.35000000003
+    ],
+    "poverty": [
+      0.0,
+      7.6778144135657085,
+      34.95129292588848
+    ],
+    "vacancy": [
+      0.0,
+      4.797979797979798,
+      24.110407614318206
+    ],
+    "value": [
+      219630.0,
+      433800.0,
+      939379.9999999999
+    ],
+    "affordability": [
+      0.0,
+      51.70952659263588,
+      100.0
+    ]
+  },
+  "normalization": "Piecewise linear P05\u21920, P50\u219250, P95\u2192100 with clipping; reverse poverty, vacancy, affordability. Equal weight per block group in percentile calculation. Compute overall from unrounded metric scores; round displayed scores half-up.",
+  "missingPolicy": "Negative Census sentinels, nonnumeric values, nulls, invalid ratios and zero denominators become null. At least 75% available weight plus income and poverty required for overall; rescale available weights.",
+  "variables": {
+    "income": "B19013_E001",
+    "poverty": "100*(C17002_E002+C17002_E003)/C17002_E001",
+    "vacancy": "100*B25002_E003/B25002_E001",
+    "value": "B25077_E001",
+    "affordability": "100*(B25070_E007+E008+E009+E010)/(B25070_E001-B25070_E011)"
+  },
+  "limitations": [
+    "ACS 5-year estimates are not current live conditions.",
+    "Margins of error are retained in source-estimates.json; composite uncertainty is not modeled.",
+    "Income, poverty and value are correlated; score favors economic resources.",
+    "Vacancy includes seasonal and recreational units.",
+    "Rent burden excludes homeowners and renters without computable ratios.",
+    "Median income/value top-code sentinels are treated as missing, not fabricated exact values.",
+    "Generalized coast-clipped boundaries are for visualization, not cadastral use.",
+    "No crime data, schools, environmental conditions or protected demographic variables are scored."
+  ]
+}

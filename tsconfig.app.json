@@ -1,0 +1,1 @@
+{"extends":"./tsconfig.json","compilerOptions":{"types":["vite/client"],"incremental":false},"include":["app/page.tsx","src/**/*.tsx","src/**/*.ts","components/ui/tabs.tsx","components/ui/dialog.tsx","vite.static.config.ts"],"exclude":["node_modules","dist"]}
