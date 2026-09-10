@@ -39,12 +39,12 @@ export const NeighborhoodMap=forwardRef<MapHandle,{data:AreaData;metric:string;s
    const m=new M.Map({container:container.current!,center:[-112.04,33.47],zoom:9.25,minZoom:7,maxZoom:16,attributionControl:{compact:true},style:{version:8,sources:{base:{type:'raster',tiles:[base+'Base/MapServer/tile/{z}/{y}/{x}'],tileSize:256,attribution}},layers:[{id:'background',type:'background',paint:{'background-color':'#e9eef0'}},{id:'base',type:'raster',source:'base'}]}});gl.current=m;
    m.on('error',(e:any)=>{if(!disposed)setError(e.sourceId==='base'?'Background tiles are unavailable. Census areas remain usable.':'A map layer could not load. Please refresh to retry.');});
    m.on('load',()=>{if(disposed)return;
+    m.addSource('labels',{type:'raster',tiles:[base+'Reference/MapServer/tile/{z}/{y}/{x}'],tileSize:256});m.addLayer({id:'labels',type:'raster',source:'labels'});
     m.addSource('areas',{type:'geojson',data,promoteId:'id'});
     m.addLayer({id:'areas-fill',type:'fill',source:'areas',paint:{'fill-color':paint(metricRef.current),'fill-opacity':.7}});
     m.addLayer({id:'areas-lines',type:'line',source:'areas',paint:{'line-color':'#fff','line-width':.65,'line-opacity':.65}});
     m.addLayer({id:'hover',type:'line',source:'areas',paint:{'line-color':'#172f44','line-width':2},filter:['==',['get','id'],'']});
     for(const [id,col,width] of [['selection-halo','#fff',7],['selection','#172f44',4],['compare-a','#5244bb',4],['compare-b','#087caa',4]] as const)m.addLayer({id,type:'line',source:'areas',paint:{'line-color':col,'line-width':width},filter:['==',['get','id'],'']});
-    m.addSource('labels',{type:'raster',tiles:[base+'Reference/MapServer/tile/{z}/{y}/{x}'],tileSize:256});m.addLayer({id:'labels',type:'raster',source:'labels'});
     m.on('click','areas-fill',e=>{const p=e.features?.[0]?.properties;if(p){setHover(null);onSelectRef.current(p as Area);}});
     m.on('mousemove','areas-fill',e=>{m.getCanvas().style.cursor='pointer';if(matchMedia('(hover:hover)').matches){const p=e.features?.[0]?.properties;setHover(p as Area);m.setFilter('hover',['==',['get','id'],p?.id||'']);}});
     m.on('mouseleave','areas-fill',()=>{m.getCanvas().style.cursor='';setHover(null);m.setFilter('hover',['==',['get','id'],'']);});
