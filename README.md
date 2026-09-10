@@ -95,6 +95,16 @@ Missing/invalid values, negative Census sentinels, nonfinite values, and zero/in
 
 The same bands apply to every active metric. A high poverty score means **low poverty**, and a high affordability score means **low rent burden**. The labels describe relative indicator scores, not people.
 
+## Summer Heat layer
+
+Summer Heat is a separate selectable layer and is deliberately excluded from the Overall neighborhood score. It represents relative summer daytime land-surface temperature, not forecast or weather-station air temperature.
+
+The generated `public/data/heat.json` uses USGS Landsat Collection 2 Level-2 Surface Temperature (`ST_B10`) assets from the public Microsoft Planetary Computer STAC mirror. The current composite uses one lowest-cloud Tier 1 scene per Landsat path/row and summer year for 2022–2024, covering June 1 through August 31. `QA_PIXEL` masks fill, dilated cloud, cirrus, cloud, cloud shadow, snow/ice, and water; invalid ST values are also removed. Surface temperature is converted with `Kelvin = DN × 0.00341802 + 149.0`, then to Fahrenheit.
+
+Each block group receives the mean of its valid 30 m pixel observations across the selected scenes. At least two distinct scene dates are required. Heat scores use the same transparent piecewise percentile normalization as the existing metrics—5th percentile = 0, median = 50, 95th percentile = 100—with higher values meaning hotter relative exposure. Exact scene metadata, dates, asset URLs, counts, anchors, and limitations are stored in `heat.json`.
+
+To regenerate it, install the pinned Python dependencies, then run `python scripts/process_heat.py`; use `--refresh` to refresh the catalog query. Raster processing uses the local `.heat-venv` environment on Windows when available.
+
 ## Limitations
 
 - This is primarily an **economic and housing** indicator. Income, poverty, and home values are correlated, so it still favors economic resources. Vacancy and rent burden add different information but do not eliminate that bias.
@@ -105,7 +115,7 @@ The same bands apply to every active metric. A high poverty score means **low po
 - Sentinels are treated as missing. Censored or unavailable medians are not invented as exact values.
 - The county-wide reference includes rural areas, uninhabited land, group quarters, student areas, and seasonal communities. Land area is not population; large polygons are visually prominent but receive no extra statistical weight.
 - Generalized cartographic polygons are unsuitable for individual property decisions. A block group is not necessarily a locally recognized neighborhood.
-- No crime data is included: a compatible county-wide incident series was not established. No schools, transit, heat, parks, building conditions, or amenities are scored.
+- No crime data is included: a compatible county-wide incident series was not established. No schools, transit, parks, building conditions, or amenities are scored. Summer Heat is an environmental overlay only and is not part of the composite score.
 - Basemap providers can change availability or terms. Data and scores are bundled independently.
 
 ## Local development
@@ -136,6 +146,7 @@ source .venv/bin/activate
 # Windows PowerShell alternative: .venv\Scripts\Activate.ps1
 pip install -r scripts/requirements.txt
 python scripts/prepare_data.py
+python scripts/process_heat.py
 python scripts/test_scoring.py
 python scripts/verify_data.py
 ```

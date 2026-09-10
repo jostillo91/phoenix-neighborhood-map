@@ -9,5 +9,6 @@ const data=JSON.parse(readFileSync(new URL('../public/data/neighborhoods.geojson
 const index=createAreaIndex(data);assert.equal(index.byId.size,2806);
 assert.equal(index.at([-112.0771083,33.4487851]).properties.id,'040131141001');assert.equal(index.at([0,0]),undefined);
 assert.deepEqual(readShare('#area=040131141001&metric=poverty'),{area:'040131141001',metric:'poverty'});
+assert.deepEqual(readShare('#area=040131141001&metric=heat'),{area:'040131141001',metric:'heat'});
 assert.deepEqual(readShare('#area=bad&metric=bad'),{area:null,metric:'overall'});
 console.log('Geography, address containment, and share-state checks passed.');

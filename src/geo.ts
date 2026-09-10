@@ -1,9 +1,13 @@
-import type { Feature, Polygon, MultiPolygon, FeatureCollection } from 'geojson';
+type Polygon={type:'Polygon';coordinates:number[][][]};
+type MultiPolygon={type:'MultiPolygon';coordinates:number[][][][]};
+type Geometry=Polygon|MultiPolygon;
+type Feature<P>={type:'Feature';properties:P;geometry:Geometry};
+type FeatureCollection<F>={type:'FeatureCollection';features:F[]};
 export type Area = { id:string; name:string; tract:string; coverage:number; [key:string]:any };
-export type AreaFeature = Feature<Polygon|MultiPolygon,Area>;
-export type AreaData = FeatureCollection<Polygon|MultiPolygon,Area>;
+export type AreaFeature = Feature<Area>;
+export type AreaData = FeatureCollection<AreaFeature>;
 export function bounds(feature:AreaFeature):[number,number,number,number]{
- const points=(feature.geometry.type==='Polygon'?feature.geometry.coordinates:feature.geometry.coordinates.flat()).flat();
+ const points:number[][]=(feature.geometry.type==='Polygon'?feature.geometry.coordinates:feature.geometry.coordinates.flat()).flat();
  let west=Infinity,south=Infinity,east=-Infinity,north=-Infinity;
  for(const [x,y] of points){west=Math.min(west,x);east=Math.max(east,x);south=Math.min(south,y);north=Math.max(north,y);}
  return [west,south,east,north];
@@ -19,7 +23,7 @@ function ringContains(point:number[],ring:number[][]):boolean{
  return inside;
 }
 export function contains(feature:AreaFeature,point:number[]):boolean{
- const polygons=feature.geometry.type==='Polygon'?[feature.geometry.coordinates]:feature.geometry.coordinates;
+ const polygons:number[][][][]=feature.geometry.type==='Polygon'?[feature.geometry.coordinates]:feature.geometry.coordinates;
  return polygons.some(p=>ringContains(point,p[0])&&!p.slice(1).some(h=>ringContains(point,h)));
 }
 export function createAreaIndex(data:AreaData){
@@ -28,5 +32,5 @@ export function createAreaIndex(data:AreaData){
 }
 export function readShare(hash:string){
  const p=new URLSearchParams(hash.replace(/^#/,''));const area=p.get('area');const metric=p.get('metric')||'overall';
- return {area:area&&/^04013\d{7}$/.test(area)?area:null,metric:['overall','income','poverty','vacancy','value','affordability'].includes(metric)?metric:'overall'};
+ return {area:area&&/^04013\d{7}$/.test(area)?area:null,metric:['overall','income','poverty','vacancy','value','affordability','heat'].includes(metric)?metric:'overall'};
 }
