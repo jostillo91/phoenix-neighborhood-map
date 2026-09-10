@@ -6,7 +6,7 @@ A responsive, interactive map of economic and housing conditions across **all 2,
 
 [Download the portable application source](https://phoenix-neighborhood-map.jostillo.chatgpt.site/phoenix-neighborhood-map-source.zip).
 
-**GitHub status (September 9, 2026):** The existing Sites source checkout was updated in place. The connected GitHub account is `jostillo91`, but `jostillo91/phoenix-neighborhood-map` returns 404 and repository searches did not locate this project. GitHub synchronization is blocked until the owner supplies the existing repository URL and grants the connection access. No replacement repository was created and no unrelated repository was modified.
+**GitHub source:** This project is tracked in the existing `jostillo91/phoenix-neighborhood-map` repository. The latest checkpoint adds the reproducible Summer Heat layer and is committed on `main`.
 
 ## Interface
 

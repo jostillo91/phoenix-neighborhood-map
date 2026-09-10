@@ -26,6 +26,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+pnpm-lock.yaml
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -45,5 +46,6 @@ next-env.d.ts
 .data-cache/
 __pycache__/
 .venv/
+.heat-venv/
 *.tsbuildinfo
 public/qa-mobile.html
