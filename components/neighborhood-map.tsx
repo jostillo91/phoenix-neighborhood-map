@@ -19,7 +19,8 @@ export const NeighborhoodMap=forwardRef<MapHandle,{data:AreaData;metric:string;s
  useImperativeHandle(ref,()=>({focus(f){const b=bounds(f);gl.current?.fitBounds([[b[0],b[1]],[b[2],b[3]]],{padding:65,maxZoom:13,duration:550});leaf.current?.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[50,50],maxZoom:14});},point(p){gl.current?.flyTo({center:p,zoom:13});leaf.current?.setView([p[1],p[0]],14);marker.current?.remove();if(gl.current&&library.current)marker.current=new library.current.Marker({color:'#172f44'}).setLngLat(p).addTo(gl.current);else if(leaf.current&&library.current)marker.current=library.current.circleMarker([p[1],p[0]],{radius:7,color:'#fff',weight:3,fillColor:'#172f44',fillOpacity:1}).addTo(leaf.current);},reset(){gl.current?.flyTo({center:[-112.04,33.47],zoom:9.25});leaf.current?.setView([33.47,-112.04],10);marker.current?.remove();}}),[]);
  useEffect(()=>{let disposed=false;let observer:ResizeObserver|undefined;
   async function init(){try{
-   const c=document.createElement('canvas'),context=c.getContext('webgl2'),supported=!!context;context?.getExtension('WEBGL_lose_context')?.loseContext();
+   // Prefer Leaflet for reliable polygon fills across desktop browser/GPU combinations.
+   const supported=false;
    if(!supported){
     const L=await import('leaflet');if(disposed)return;library.current=L;
     const m=L.map(container.current!,{zoomControl:false,minZoom:7,maxZoom:16,preferCanvas:false}).setView([33.47,-112.04],10);leaf.current=m;
