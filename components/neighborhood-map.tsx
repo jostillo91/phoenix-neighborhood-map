@@ -3,6 +3,7 @@ import {useEffect,useRef,useState,forwardRef,useImperativeHandle} from 'react';
 import type {Map as GLMap} from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import 'leaflet/dist/leaflet.css';
+import {readBasemap,imageryTiles,imageryAttribution,type Basemap} from '@/src/basemaps';
 import {color,paint,metrics} from '@/src/metrics';
 import {bounds,type AreaData,type AreaFeature,type Area} from '@/src/geo';
 import {LocateFixed,Plus,Minus} from 'lucide-react';
@@ -12,10 +13,12 @@ const base='https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Li
 const attribution='Tiles © Esri, HERE, Garmin, <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, GIS community · Census data';
 export const NeighborhoodMap=forwardRef<MapHandle,{data:AreaData;metric:string;selected:string|null;compared:string[];onSelect:(p:Area)=>void;onReady:()=>void}>(function NeighborhoodMap({data,metric,selected,compared,onSelect,onReady},ref){
  const container=useRef<HTMLDivElement>(null),gl=useRef<GLMap|null>(null),leaf=useRef<any>(null),layers=useRef<any>(null),marker=useRef<any>(null),library=useRef<any>(null);
+ const [basemap,setBasemap]=useState<Basemap>(()=>readBasemap(typeof location==='undefined'?'':location.hash));
+ const basemapRef=useRef(basemap),baseLayers=useRef<any[]>([]);basemapRef.current=basemap;
  const selectedRef=useRef(selected),comparedRef=useRef(compared),metricRef=useRef(metric),onSelectRef=useRef(onSelect);
  selectedRef.current=selected;comparedRef.current=compared;metricRef.current=metric;onSelectRef.current=onSelect;
  const [ready,setReady]=useState(false),[error,setError]=useState(''),[hover,setHover]=useState<Area|null>(null);
- const layerStyle=(f:AreaFeature)=>{const id=f.properties.id;const chosen=id===selectedRef.current;const a=comparedRef.current[0]===id;const b=comparedRef.current[1]===id;return {fillColor:color(f.properties[metricRef.current],metricRef.current),fillOpacity:.7,color:a?'#5244bb':b?'#087caa':chosen?'#172f44':'#fff',weight:chosen||a||b?4:.65,opacity:chosen||a||b?1:.65};};
+ const layerStyle=(f:AreaFeature)=>{const id=f.properties.id;const chosen=id===selectedRef.current;const a=comparedRef.current[0]===id;const b=comparedRef.current[1]===id;return {fillColor:color(f.properties[metricRef.current],metricRef.current),fillOpacity:basemapRef.current==='standard'?.7:.5,color:a?'#5244bb':b?'#087caa':chosen?'#172f44':'#fff',weight:chosen||a||b?4:.65,opacity:chosen||a||b?1:.65};};
  useImperativeHandle(ref,()=>({focus(f){const b=bounds(f);gl.current?.fitBounds([[b[0],b[1]],[b[2],b[3]]],{padding:65,maxZoom:13,duration:550});leaf.current?.fitBounds([[b[1],b[0]],[b[3],b[2]]],{padding:[50,50],maxZoom:14});},point(p){gl.current?.flyTo({center:p,zoom:13});leaf.current?.setView([p[1],p[0]],14);marker.current?.remove();if(gl.current&&library.current)marker.current=new library.current.Marker({color:'#172f44'}).setLngLat(p).addTo(gl.current);else if(leaf.current&&library.current)marker.current=library.current.circleMarker([p[1],p[0]],{radius:7,color:'#fff',weight:3,fillColor:'#172f44',fillOpacity:1}).addTo(leaf.current);},reset(){gl.current?.flyTo({center:[-112.04,33.47],zoom:9.25});leaf.current?.setView([33.47,-112.04],10);marker.current?.remove();}}),[]);
  useEffect(()=>{let disposed=false;let observer:ResizeObserver|undefined;
   async function init(){try{
@@ -24,7 +27,7 @@ export const NeighborhoodMap=forwardRef<MapHandle,{data:AreaData;metric:string;s
    if(!supported){
     const L=await import('leaflet');if(disposed)return;library.current=L;
     const m=L.map(container.current!,{zoomControl:false,minZoom:7,maxZoom:16,preferCanvas:false}).setView([33.47,-112.04],10);leaf.current=m;
-    L.tileLayer(base+'Base/MapServer/tile/{z}/{y}/{x}',{attribution,maxZoom:16}).on('tileerror',()=>setError('Background tiles are unavailable. You can still explore Census areas.')).addTo(m);
+
     layers.current=L.geoJSON(data,{style:f=>f?layerStyle(f as AreaFeature):{},onEachFeature:(f:any,l:any)=>{
      l.on('click',()=>{setHover(null);onSelectRef.current(f.properties);});
      l.on('mouseover',()=>{if(matchMedia('(hover:hover)').matches){setHover(f.properties);l.setStyle({weight:2.5,color:'#172f44',opacity:1});}});
@@ -33,7 +36,7 @@ export const NeighborhoodMap=forwardRef<MapHandle,{data:AreaData;metric:string;s
      l.on('add',()=>{const el=l.getElement();if(el){el.setAttribute('data-geoid',f.properties.id);el.setAttribute('aria-label',`Block group ${f.properties.id}`);}});
     }}).addTo(m);
     m.createPane('cityLabels');m.getPane('cityLabels')!.style.zIndex='450';m.getPane('cityLabels')!.style.pointerEvents='none';
-    L.tileLayer(base+'Reference/MapServer/tile/{z}/{y}/{x}',{pane:'cityLabels',maxZoom:16}).addTo(m);
+
     observer=new ResizeObserver(()=>m.invalidateSize());observer.observe(container.current!);setReady(true);onReady();return;
    }
    const M=await import('maplibre-gl');if(disposed)return;library.current=M;
@@ -55,5 +58,36 @@ export const NeighborhoodMap=forwardRef<MapHandle,{data:AreaData;metric:string;s
   init();return()=>{disposed=true;observer?.disconnect();gl.current?.remove();gl.current=null;leaf.current?.remove();leaf.current=null;};
  },[data]);
  useEffect(()=>{if(!ready)return;const m=gl.current;if(m?.getLayer('areas-fill')){m.setPaintProperty('areas-fill','fill-color',paint(metric));for(const id of ['selection','selection-halo'])m.setFilter(id,['==',['get','id'],selected||'']);m.setFilter('compare-a',['==',['get','id'],compared[0]||'']);m.setFilter('compare-b',['==',['get','id'],compared[1]||'']);}if(layers.current){layers.current.setStyle(layerStyle);layers.current.eachLayer((l:any)=>{if(l.feature.properties.id===selected||compared.includes(l.feature.properties.id))l.bringToFront();});}},[ready,metric,selected,compared]);
- return <><div ref={container} className="map-canvas" aria-label="Interactive neighborhood map" data-ready={ready}/>{!ready&&!error&&<div className="map-message" role="status">Drawing 2,806 Census areas…</div>}{error&&<div className="map-error" role="status">{error}<button onClick={()=>setError('')} aria-label="Dismiss map notice">×</button></div>}<TooltipProvider delayDuration={350}><div className="map-tools">{[{label:'Zoom in',icon:<Plus size={19}/>,action:()=>{gl.current?.zoomIn();leaf.current?.zoomIn();}},{label:'Zoom out',icon:<Minus size={19}/>,action:()=>{gl.current?.zoomOut();leaf.current?.zoomOut();}},{label:'Show Phoenix Valley',icon:<LocateFixed size={19}/>,action:()=>{gl.current?.flyTo({center:[-112.04,33.47],zoom:9.25});leaf.current?.setView([33.47,-112.04],10);}}].map(b=><Tooltip key={b.label}><TooltipTrigger asChild><button aria-label={b.label} disabled={!ready} onClick={b.action}>{b.icon}</button></TooltipTrigger><TooltipContent side="left">{b.label}</TooltipContent></Tooltip>)}</div></TooltipProvider>{hover&&<div className="hover-readout"><strong>Tract {hover.tract} · BG {hover.id.slice(-1)}</strong><span>{metrics.find(m=>m.id===metric)?.label}: {hover[metric]??'No data'}{hover[metric]!=null?' / 100':''}</span></div>}</>;
+
+ useEffect(()=>{
+  const restore=()=>setBasemap(readBasemap(location.hash));
+  window.addEventListener('hashchange',restore);
+  return()=>window.removeEventListener('hashchange',restore);
+ },[]);
+ function changeBasemap(value:Basemap){
+  setBasemap(value);
+  const state=new URLSearchParams(location.hash.slice(1));
+  state.set('basemap',value);
+  history.replaceState(null,'',location.pathname+location.search+'#'+state);
+ }
+ useEffect(()=>{
+  const m=leaf.current,L=library.current;if(!ready||!m)return;
+  setError('');
+  const active:any[]=[];
+  const add=(url:string,options:any)=>{
+   const tile=L.tileLayer(url,{maxZoom:16,maxNativeZoom:16,...options});
+   tile.on('tileerror',()=>{if(m.hasLayer(tile))setError('Background tiles are unavailable. Try another basemap. Census areas remain usable.');});
+   active.push(tile);tile.addTo(m);
+  };
+  baseLayers.current.forEach(tile=>{m.removeLayer(tile);tile.off();});
+  if(basemap==='standard'){
+   add(base+'Base/MapServer/tile/{z}/{y}/{x}',{attribution});
+   add(base+'Reference/MapServer/tile/{z}/{y}/{x}',{pane:'cityLabels'});
+  }else add(imageryTiles[basemap],{attribution:imageryAttribution+(basemap==='hybrid'?' · US Topo roads and place names':'')});
+  baseLayers.current=active;
+  layers.current?.setStyle(layerStyle);
+  return()=>{active.forEach(tile=>{m.removeLayer(tile);tile.off();});};
+ },[ready,basemap]);
+
+ return <><label className="basemap-control">Basemap<select aria-label="Basemap" value={basemap} onChange={e=>changeBasemap(e.target.value as Basemap)}><option value="standard">Standard</option><option value="satellite">Satellite</option><option value="hybrid">Hybrid</option></select></label><div ref={container} className="map-canvas" aria-label="Interactive neighborhood map" data-ready={ready}/>{!ready&&!error&&<div className="map-message" role="status">Drawing 2,806 Census areas…</div>}{error&&<div className="map-error" role="status">{error}<button onClick={()=>setError('')} aria-label="Dismiss map notice">×</button></div>}<TooltipProvider delayDuration={350}><div className="map-tools">{[{label:'Zoom in',icon:<Plus size={19}/>,action:()=>{gl.current?.zoomIn();leaf.current?.zoomIn();}},{label:'Zoom out',icon:<Minus size={19}/>,action:()=>{gl.current?.zoomOut();leaf.current?.zoomOut();}},{label:'Show Phoenix Valley',icon:<LocateFixed size={19}/>,action:()=>{gl.current?.flyTo({center:[-112.04,33.47],zoom:9.25});leaf.current?.setView([33.47,-112.04],10);}}].map(b=><Tooltip key={b.label}><TooltipTrigger asChild><button aria-label={b.label} disabled={!ready} onClick={b.action}>{b.icon}</button></TooltipTrigger><TooltipContent side="left">{b.label}</TooltipContent></Tooltip>)}</div></TooltipProvider>{hover&&<div className="hover-readout"><strong>Tract {hover.tract} · BG {hover.id.slice(-1)}</strong><span>{metrics.find(m=>m.id===metric)?.label}: {hover[metric]??'No data'}{hover[metric]!=null?' / 100':''}</span></div>}</>;
 });
