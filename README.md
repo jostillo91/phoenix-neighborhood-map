@@ -24,7 +24,7 @@ Explicitly submitted queries go directly to the public [Photon API](https://gith
 
 ## Stack and architecture
 
-React 19, TypeScript, Vite 8, MapLibre GL JS, GeoJSON. A dynamically loaded Leaflet renderer supports browsers without WebGL2. Both renderers read the same bundled data and use the same thresholds. The published application is a **static Vite build**: no backend, API key, database, or user login is needed. The Sites preview scaffold uses Vinext for supervised development; `vite.static.config.ts` is the independent static production configuration. Its unused scaffold helpers are not part of the deployed app.
+React 19, TypeScript, Vite 8, Leaflet SVG, MapLibre GL JS, and GeoJSON. The published application uses Leaflet SVG for the dense block-group layer so all 2,806 polygon fills remain reliable across desktop browser/GPU combinations; the retained MapLibre path is not the production default. The published application is a **static Vite build**: no backend, API key, database, or user login is needed. The Sites preview scaffold uses Vinext for supervised development; `vite.static.config.ts` is the independent static production configuration. Its unused scaffold helpers are not part of the deployed app.
 
 ## Data sources and dates
 
@@ -105,6 +105,16 @@ Each block group receives the mean of its valid 30 m pixel observations across t
 
 To regenerate it, install the pinned Python dependencies, then run `python scripts/process_heat.py`; use `--refresh` to refresh the catalog query. Raster processing uses the local `.heat-venv` environment on Windows when available.
 
+## Tree Canopy layer
+
+Tree Canopy is a separate informational layer and is deliberately excluded from the five-factor Overall score. It uses the USDA Forest Service Geospatial Office / Multi-Resolution Land Characteristics Consortium (MRLC) **NLCD Tree Canopy Cover CONUS v2025-6** product for 2025. The source is a direct 30 m percent-tree-canopy raster produced from Landsat and Sentinel-2 imagery, Forest Inventory and Analysis reference data, and Forest Service modeling—not NDVI or a general greenness index.
+
+The pipeline requests the Phoenix Valley extent from the public USFS image service, rasterizes the exact existing 2,806 Census block-group geometries onto that grid, and stores the mean valid pixel canopy percentage for each GEOID. The NLCD TCC product applies its own water and non-tree-agriculture masks; source non-processing/background values (254/255) are excluded from the denominator here. Tree Canopy scores use the same piecewise normalization as the other relative layers: 5th percentile = 0, median = 50, 95th percentile = 100, with clipping. Higher scores mean more relative canopy coverage.
+
+The source year differs from the Summer Heat composite (2022–2024). Vegetation often correlates with lower surface temperatures, but Tree Canopy is independently measured and is not mathematically derived from Summer Heat. The canopy layer does not imply canopy height, identify individual trees, or establish a causal cooling effect; 30 m pixels and generalized block-group boundaries can smooth small patches. Exact source, aggregation, denominator, anchors, coverage, and limitations are stored in `tree-canopy.json`.
+
+To regenerate it, install the pinned Python dependencies, then run `python scripts/process_tree_canopy.py`; use `--refresh` to redownload the current public source raster. The raster cache remains in `.data-cache/`, while only the compact generated `public/data/tree-canopy.json` is committed.
+
 ## Limitations
 
 - This is primarily an **economic and housing** indicator. Income, poverty, and home values are correlated, so it still favors economic resources. Vacancy and rent burden add different information but do not eliminate that bias.
@@ -116,6 +126,7 @@ To regenerate it, install the pinned Python dependencies, then run `python scrip
 - The county-wide reference includes rural areas, uninhabited land, group quarters, student areas, and seasonal communities. Land area is not population; large polygons are visually prominent but receive no extra statistical weight.
 - Generalized cartographic polygons are unsuitable for individual property decisions. A block group is not necessarily a locally recognized neighborhood.
 - No crime data is included: a compatible county-wide incident series was not established. No schools, transit, parks, building conditions, or amenities are scored. Summer Heat is an environmental overlay only and is not part of the composite score.
+- Tree Canopy is an independently measured environmental overlay, not part of the composite score. Its 2025 source date does not match the 2022–2024 Summer Heat imagery period.
 - Basemap providers can change availability or terms. Data and scores are bundled independently.
 
 ## Local development
@@ -147,6 +158,7 @@ source .venv/bin/activate
 pip install -r scripts/requirements.txt
 python scripts/prepare_data.py
 python scripts/process_heat.py
+python scripts/process_tree_canopy.py
 python scripts/test_scoring.py
 python scripts/verify_data.py
 ```
@@ -171,3 +183,4 @@ An optional GitHub Pages workflow remains available if the owner later requests 
 ## Phase 2
 
 See [the complete dataset assessment](PHASE2_DATASETS.md), also [readable on the public site](https://phoenix-neighborhood-map.jostillo.chatgpt.site/phase2-data.html). It covers source, coverage, update frequency, granularity, block-group joins, and limitations for violent/property crime, heat, parks, groceries, transit, and walkability. No candidate changes the current formula. Highest-value next feature: a separately labeled summer surface-heat overlay.
+

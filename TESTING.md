@@ -53,3 +53,23 @@ The existing checkout, deployment setup, source history, GeoJSON, and scoring pi
 The cloud browser lacks WebGL2, so visual interaction checks exercise the Leaflet fallback. MapLibre is typechecked/built but still needs a WebGL-capable device smoke test. The Sites browser policy permits internal preview QA and prohibits navigating the cloud browser to the live Sites URL. The public URL HTTP check returned 403 in this environment; therefore live browser interactions and live refresh are not claimed. Hosting publication is verified separately by the hosting service's terminal status.
 
 Search is a best-effort public Photon demo without an SLA. Generalized boundaries and approximate result points remain a limitation near borders. No high-volume service load test was performed.
+
+# Tree Canopy layer validation — September 10, 2026
+
+## Automated
+
+- The reproducible NLCD pipeline produced `public/data/tree-canopy.json` for all 2,806 existing Census block-group GEOIDs.
+- 2,806 block groups received valid raw canopy percentages and bounded 0–100 scores; 0 remain unscored.
+- Raw values are bounded to 0–100 percent and include both very low-canopy urban areas and greener outlying areas.
+- Existing scoring, heat, geography, share-state, TypeScript, and production-build checks pass; the new canopy dataset has its own integrity test.
+
+## Browser checks
+
+- The Tree Canopy selector uses the existing Leaflet SVG rendering path and recolors the same block-group polygons with a dry-to-deep-green scale.
+- Tree Canopy legend, raw percentage details, 0–100 score, comparison row, `#metric=tree-canopy` deep link, and refresh restoration are covered by the production browser check.
+- Existing Overall, Income, Poverty, Vacancy, Housing value, Affordability, and Summer Heat layers remain selectable and retain visible polygon paths.
+
+## Data limits
+
+The source is the USDA Forest Service/MRLC NLCD Tree Canopy Cover CONUS v2025-6 product at 30 m resolution. Its product-level water and non-tree-agriculture masks are respected, and non-processing/background pixels are excluded from the denominator. The 2025 source year differs from the 2022–2024 Summer Heat composite. Canopy percentage is not canopy height or an individual-tree inventory, and the relationship to heat is descriptive rather than causal.
+
