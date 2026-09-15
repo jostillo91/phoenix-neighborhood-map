@@ -32,6 +32,6 @@ export function createAreaIndex(data:AreaData){
 }
 export function readShare(hash:string){
  const p=new URLSearchParams(hash.replace(/^#/,''));const area=p.get('area');const metric=p.get('metric')||'overall';
- return {area:area&&/^04013\d{7}$/.test(area)?area:null,metric:['overall','income','poverty','vacancy','value','affordability','heat','tree-canopy','violent-crime','property-crime'].includes(metric)?metric:'overall'};
+ return {area:area&&/^04013\d{7}$/.test(area)?area:null,metric:['overall','income','poverty','vacancy','value','affordability','heat','tree-canopy','transit','violent-crime','property-crime'].includes(metric)?metric:'overall'};
 }
 
