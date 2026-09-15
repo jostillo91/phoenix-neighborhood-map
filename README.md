@@ -125,7 +125,7 @@ To regenerate it, install the pinned Python dependencies, then run `python scrip
 - Sentinels are treated as missing. Censored or unavailable medians are not invented as exact values.
 - The county-wide reference includes rural areas, uninhabited land, group quarters, student areas, and seasonal communities. Land area is not population; large polygons are visually prominent but receive no extra statistical weight.
 - Generalized cartographic polygons are unsuitable for individual property decisions. A block group is not necessarily a locally recognized neighborhood.
-- No crime data is included: a compatible county-wide incident series was not established. No schools, transit, parks, building conditions, or amenities are scored. Summer Heat is an environmental overlay only and is not part of the composite score.
+- Crime is a separate 2025 overlay and is excluded from the Economic & Housing Score. It provides Arizona DPS citywide violent/property totals for Valley agencies plus mapped incident detail for Phoenix, Mesa, Tempe, Chandler, and Glendale. See `CRIME_DATA.md` for definitions and limitations. No schools, transit, parks, or building conditions are scored. Summer Heat remains an environmental overlay.
 - Tree Canopy is an independently measured environmental overlay, not part of the composite score. Its 2025 source date does not match the 2022–2024 Summer Heat imagery period.
 - Basemap providers can change availability or terms. Data and scores are bundled independently.
 
@@ -159,8 +159,10 @@ pip install -r scripts/requirements.txt
 python scripts/prepare_data.py
 python scripts/process_heat.py
 python scripts/process_tree_canopy.py
+python scripts/add_glendale_crime.py --refresh
 python scripts/test_scoring.py
 python scripts/verify_data.py
+node scripts/test_crime.mjs
 ```
 
 Use `python scripts/prepare_data.py --refresh` to re-download official files. `.data-cache/` contains only county table rows and the Arizona boundary ZIP and is ignored by Git. Full national tables are streamed and discarded. Regeneration overwrites the three processed files in `public/data/`; review changes before committing. The year is deliberately pinned to 2024 to prevent accidental cross-vintage joins. Changing years requires reviewing variable definitions, geographic compatibility, counts, and tests.
@@ -183,3 +185,10 @@ An optional GitHub Pages workflow remains available if the owner later requests 
 ## Phase 2
 
 See [the complete dataset assessment](PHASE2_DATASETS.md), also [readable on the public site](https://phoenix-neighborhood-map.jostillo.chatgpt.site/phase2-data.html). It covers source, coverage, update frequency, granularity, block-group joins, and limitations for violent/property crime, heat, parks, groceries, transit, and walkability. No candidate changes the current formula. Highest-value next feature: a separately labeled summer surface-heat overlay.
+
+## Data transparency update — September 12, 2026
+
+The overall layer is now labeled Economic & Housing Score, with neutral comparative bands. Existing numeric scores, weights, source data, and normalization are unchanged. The 160 block groups without economic scores are striped; selection explains missing measures and the 75% / income / poverty requirements. Source, observation dates, retrieval dates, weight availability, and available income margins of error are disclosed in area details. Heat and canopy details show their own observation coverage.
+
+Crime views publish a separate, dated 2025 crime layer. Citywide rates use Arizona DPS agency totals and ACS 2020–2024 population estimates. Neighborhood detail uses mapped reports from Phoenix, Mesa, Tempe, Chandler, and Glendale with source-specific counting and location rules. It is not part of the Economic & Housing Score. Full source contracts, exclusions, population allocation, and audit totals are documented in `CRIME_DATA.md`.
+
